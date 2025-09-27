@@ -1,0 +1,257 @@
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #000000;
+  color: #000000;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+/* Header */
+header {
+  background-color: #0000001f;
+  padding: 5px 0;
+  position: relative;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+position: relative;
+    font-size: 40px;
+    letter-spacing: .25px;display:flex; align-items:center; gap:10px; font-weight:1000;
+    background: linear-gradient(40deg, #ffa600, #ffffff); 
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo img {
+  position: absolute;
+  top: 22px;
+  left: -40px;
+  width: 30px;
+  height: 30px;
+}
+
+nav ul {
+  display: flex;
+  gap: 30px;
+  list-style: none;
+}
+
+nav a {
+  color: #ccc;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+nav a:hover {
+  color: #ff912a;
+}
+
+.auth a {
+  margin-left: 15px;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.login {
+  color: #fff;
+  border: 1px solid #444;
+  background-color: transparent;
+}
+
+.signup {
+ background-color: #7a4b034f;
+    border: 2px solid red;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgb(0 0 0);
+}
+
+.signup:hover {
+  background-color: #e16421;
+  color: #fff;
+}
+
+/* Hero Section */
+.hero {
+  position: relative; /* video ko hero ke andar limit karega */
+  padding: 100px 0 80px;
+  text-align: center;
+  overflow: hidden; /* video ka overflow cut ho jayega */
+}
+
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1; /* content ke peeche */
+}
+
+.hero h1 {
+  font-size: 70px;
+  margin-bottom: 20px;
+  font-weight: 1000;
+  background: linear-gradient(33deg, #ffc800, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /* video ke upar visible ho */
+}
+
+.hero p {
+  font-size: 18px;
+  color: #f0f0f0; /* video ke upar readable */
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+
+.buttons {
+  margin-top: 20px;
+}
+
+.buttons a {
+  display: inline-block;
+  margin: 0 10px;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #ffb2414f;
+    border: 2px solid red;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgb(0 0 0);
+}
+
+.btn-primary:hover {
+  background-color: #ea7127;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* Chart Area */
+.chart-area {
+  padding: 60px 0;
+  background-color: #000000;
+}
+
+.chart-container {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.chart-frame {
+  width: 100%;
+  height: 500px;
+  border-radius: 8px;
+  
+  border: 1px solid orangered;
+}
+
+/* Footer */
+footer {
+  background-color: #121216;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+  margin-top: 40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+
+  .buttons a {
+    margin: 10px 5px;
+    width: 100%;
+    max-width: 240px;
+  }
+}
+
+/* User Info Section */
+#user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 20px;
+}
+
+#user-info img {
+  width: 36px;
+  height: 36px;
+   background-color: #ffb2414f;
+    border: 2px solid red;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgb(0 0 0);
+  object-fit: cover;
+}
+
+#user-info span {
+  color: #fff;
+  font-weight: 500;
+  font-size: 14px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Agar name bada ho to "..." dikhaye */
+}
+
+#logout-btn {
+  background-color: transparent;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#logout-btn:hover {
+  background-color: #24b27c;
+  color: #000;
+  border-color: #24b27c;
+}

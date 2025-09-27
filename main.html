@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AruTradeX — Clean Trading Dashboard</title>
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="description" content="AruTradeX — Clean, professional multi-market dashboard with charts, signals, leaderboards, news, and algorithms." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- TradingView Core (required for widgets & charting) -->
+  <script src="https://s3.tradingview.com/tv.js" defer></script>
+
+
+
+  <!-- Local CSS -->
+  <link rel="stylesheet" href="main.css" />
+</head>
+<body data-theme="dark">
+  <!-- ================= HEADER ================= -->
+  <header class="site-header" role="banner">
+    <div class="container nav" role="navigation" aria-label="Primary">
+      <a class="brand" href="#" aria-label="AruTradeX Home">
+        <span style=" background: linear-gradient(40deg, #ffa600, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;"class="brand-text">AruTradeX</span>
+      </a>
+
+      <nav style=" background: linear-gradient(543deg, #A9333A, #F8DF8B); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;"class="nav-links" aria-label="Sections">
+        <a href="#overview" aria-current="page">Overview</a>
+        <a href="#charts">Charts</a>
+        <a href="#signals">Signals</a>
+        <a href="#algos">Algorithms</a>
+        <a href="#news">News</a>
+        <a href="#calendar">Calendar</a>
+        <a href="#courses">Courses</a>
+      </nav>
+
+      <div class="tools" aria-hidden="false">
+        <div class="searchbar" role="search">
+          <input id="q" class="input" type="text" placeholder="Search: NSE:NIFTY, BINANCE:BTCUSDT, NASDAQ:TSLA…" aria-label="Search symbols & markets" />
+          <button id="btnSearch" class="btn btn-primary" aria-label="Search symbol">Search</button>
+          <div class="suggest" aria-hidden="true">Try: <code>NSE:NIFTY</code> • <code>BSE:SENSEX</code> • <code>BINANCE:BTCUSDT</code></div>
+        </div>
+<!-- Avatar + dropdown -->
+<div class="avatar-wrapper" style="position:relative;">
+  <button id="userAvatarBtn" class="avatar" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
+    <img id="userAvatarImg" src="https://i.pravatar.cc/48?img=68" alt="User avatar" />
+  </button>
+
+  <div id="avatarMenu" class="avatar-menu" role="menu" aria-hidden="true">
+    <div class="menu-user">
+      <img id="menuUserImg" src="" alt="" />
+      <div class="menu-user-info">
+        <strong id="menuUsername">User</strong>
+        <div class="muted small" id="menuUserEmail"></div>
+      </div>
+    </div>
+
+    <div class="menu-actions">
+      <button id="btnProfile" class="btn" role="menuitem">Profile</button>
+      <button id="btnLogout" class="btn btn-primary" role="menuitem">Logout</button>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= TICKER ================= -->
+  <section id="ticker" class="ticker" aria-hidden="false">
+    <div class="container card">
+      <div class="card-body">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script async src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js">
+          {
+            "symbols": [
+              {"proName":"NSE:NIFTY","title":"Nifty 50"},
+              {"proName":"BSE:SENSEX","title":"Sensex"},
+              {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},
+              {"proName":"NASDAQ:NDX","title":"Nasdaq 100"},
+              {"proName":"BINANCE:BTCUSDT","title":"BTC/USDT"},
+              {"proName":"BINANCE:ETHUSDT","title":"ETH/USDT"},
+              {"proName":"FX_IDC:USDINR","title":"USD/INR"},
+              {"proName":"MCX:GOLD1!","title":"Gold (MCX)"},
+              {"proName":"TVC:USOIL","title":"Crude Oil"}
+            ],
+            "showSymbolLogo": true,
+            "isTransparent": true,
+            "displayMode": "adaptive",
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= OVERVIEW / HERO ================= -->
+  <section id="overview" class="hero-wrap">
+    <div class="container hero">
+      <!-- Background video (placed BEFORE content so content sits on top) -->
+      <div class="bg-video-wrap" aria-hidden="true">
+        <video id="bgVideo"
+               class="bg-video"
+               autoplay
+               loop
+               muted
+               playsinline
+               tabindex="-1"
+               poster="assets/bg-poster.jpg">
+          <source src="assets/bgg2.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Content -->
+      <div class="hero-content">
+        <div class="hero-left">
+          <h1>Welcome back</h1>
+          <p class="sub">Your multi-market command center — charts, signals, algos, news &amp; more.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#signals">View VIP Signals</a>
+            <a class="btn" href="#algos">Browse Algorithms</a>
+          </div>
+          <div class="quick" id="quickChips" aria-label="Quick filters">
+            <button class="chip" data-sym="BINANCE:BTCUSDT">BTC</button>
+            <button class="chip" data-sym="BINANCE:ETHUSDT">ETH</button>
+            <button class="chip" data-sym="NSE:NIFTY">NIFTY</button>
+            <button class="chip" data-sym="BSE:SENSEX">SENSEX</button>
+            <button class="chip" data-sym="FOREXCOM:EURUSD">EURUSD</button>
+            <button class="chip" data-sym="TVC:GOLD">GOLD</button>
+            <button class="chip" data-sym="TVC:USOIL">CRUDE</button>
+          </div>
+        </div>
+
+        <div class="card hero-card">
+          <div class="card-head">
+            <strong style=" color: rgb(221, 170, 74);" font-weight:700; font-size:25px">Advanced Chart</strong>
+            <div class="tools">
+              <button id="btnFullscreen" class="icon-btn" title="Fullscreen" aria-label="Toggle fullscreen">⛶</button>
+            </div>
+          </div>
+          <div id="axAdvancedChart" class="card-body adv-chart" role="region" aria-label="Advanced Chart"></div>
+          <div class="container card-note">
+            <div class="note">Use search or quick chips to load any symbol (e.g., <code>NSE:RELIANCE</code>, <code>NASDAQ:TSLA</code>, <code>BINANCE:SOLUSDT</code>).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SUMMARY CARDS ================= -->
+  <section id="summary">
+    <div class="container">
+      <div class="grid-6">
+        <!-- Sensex -->
+        <article class="card mini">
+          <div style="color: rgb(221, 170, 74);" class="card-head"><strong>SENSEX</strong></div>
+          <div class="tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js">
+              {
+                "symbols": [["BSE:SENSEX|1D"]],
+                "chartOnly": true,
+                "colorTheme": "dark",
+                "autosize": true,
+                "showVolume": false,
+                "showMA": true,
+                "lineWidth": 2,
+                "gridLineColor": "rgba(255,255,255,0.04)",
+                "locale": "en"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+
+        <!-- ETH -->
+        <article class="card mini">
+          <div  style="color: rgb(221, 170, 74);" class="card-head"><strong>ETH/USDT</strong></div>
+          <div class="tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js">
+              {
+                "symbols": [["BINANCE:ETHUSDT|1D"]],
+                "chartOnly": true,
+                "colorTheme": "dark",
+                "autosize": true,
+                "showVolume": false,
+                "showMA": true,
+                "lineWidth": 2,
+                "gridLineColor": "rgba(255,255,255,0.04)",
+                "locale": "en"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <!-- GOLD -->
+        <article class="card mini">
+          <div  style="color: rgb(221, 170, 74);" class="card-head"><strong>GOLD (XAU)</strong></div>
+          <div class="tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js">
+              {
+                "symbols": [["TVC:GOLD|1D"]],
+                "chartOnly": true,
+                "colorTheme": "dark",
+                "autosize": true,
+                "showVolume": false,
+                "showMA": true,
+                "lineWidth": 2,
+                "gridLineColor": "rgba(255,255,255,0.04)",
+                "locale": "en"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <!-- EURUSD -->
+        <article class="card mini">
+          <div  style="color: rgb(221, 170, 74);" class="card-head"><strong>EURUSD</strong></div>
+          <div class="tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js">
+              {
+                "symbols": [["FOREXCOM:EURUSD|1D"]],
+                "chartOnly": true,
+                "colorTheme": "dark",
+                "autosize": true,
+                "showVolume": false,
+                "showMA": true,
+                "lineWidth": 2,
+                "gridLineColor": "rgba(255,255,255,0.04)",
+                "locale": "en"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+      <div class="bg-video-wrap2" aria-hidden="true">
+        <video id="bgVideo2"
+               class="bg-video2"
+               autoplay
+               loop
+               muted
+               playsinline
+               tabindex="-1">
+          <source src="/assets/bgg.mov" type="video/mp4">
+        </video>
+      </div>
+  <!-- ================= CHART WALL ================= -->
+  <section id="charts">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2>Chart Wall</h2>
+          <p class="muted">Crypto • Indices • Forex • Commodities • Stocks • ETFs</p>
+        </div>
+        <div class="chart-controls" id="intervalBtns" aria-label="Intervals">
+          <button class="btn" data-int="1">1m</button>
+          <button class="btn" data-int="5">5m</button>
+          <button class="btn" data-int="15">15m</button>
+          <button class="btn" data-int="60">1h</button>
+          <button class="btn" data-int="240">4h</button>
+          <button class="btn" data-int="D">1D</button>
+        </div>
+      </div>
+
+      
+      <div class="wall">
+        <article class="card wall-xl">
+          <div class="card-head">
+            <strong style="color:rgb(241, 197, 169);" id="chartTitle">Advanced: <span>BINANCE:BTCUSDT</span></strong>
+            <span class="chip">Premium</span>
+          </div>
+          <div id="tv_chart_container" class="card-body tv-advanced" aria-label="Chart wall"></div>
+        </article>
+        
+
+        <!-- ETH MINI -->
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);" class="card-head"><strong>ETH/USDT</strong></div>
+          <div class="card-body tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js">
+              {
+                "symbol": "BINANCE:ETHUSDT",
+                "width": "100%",
+                "height": "100%",
+                "locale": "en",
+                "dateRange": "12M",
+                "colorTheme": "dark",
+                "trendLineColor": "rgba(50, 179, 255, 1)",
+                "underLineColor": "rgba(50, 179, 255, 0.15)",
+                "isTransparent": true,
+                "autosize": true
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <!-- USOIL MINI -->
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);" class="card-head"><strong>USOIL</strong></div>
+          <div class="card-body tvbox h-280">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js">
+              {
+                "symbol": "TVC:USOIL",
+                "width": "100%",
+                "height": "100%",
+                "locale": "en",
+                "dateRange": "12M",
+                "colorTheme": "dark",
+                "trendLineColor": "rgba(255, 90, 99, 1)",
+                "underLineColor": "rgba(255, 90, 99, 0.15)",
+                "isTransparent": true,
+                "autosize": true
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HEATMAP + SCREENER ================= -->
+  <section id="heatmap">
+      <div class="bg-video-wrap5" aria-hidden="true">
+    <video class="bg-video5" autoplay loop muted playsinline>
+      <source src="/assets/bgg.mov" type="video/mp4">
+    </video>
+  </div>
+    <div class="container">
+      <div class="section-head">
+        <h2 style="color:rgb(241, 197, 169);" >Heatmaps & Screeners</h2>
+        <span class="muted">Sector moves & filters for opportunities</span>
+      </div>
+      <div class="grid-2">
+        <!-- Crypto Heatmap -->
+        <article class="card">
+          <div class="card-head"><strong>Crypto Heatmap</strong></div>
+          <div class="card-body tvbox h-420">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-crypto-coins-heatmap.js">
+              {
+                "colorTheme": "dark",
+                "locale": "en",
+                "isTransparent": true,
+                "width": "100%",
+                "height": "100%"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <!-- India Stock Screener -->
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);" class="card-head"><strong>India Stock Screener</strong></div>
+          <div class="card-body tvbox h-460">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js">
+              {
+                "defaultColumn": "overview",
+                "defaultScreen": "top_gainers",
+                "market": "india",
+                "showToolbar": true,
+                "colorTheme": "dark",
+                "locale": "en",
+                "isTransparent": true,
+                "width": "100%",
+                "height": "100%"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+<!-- ================= VIP SIGNALS ================= -->
+<section id="signals" class="signals-section">
+  <div class="bg-video-wrap3" aria-hidden="true">
+    <video class="bg-video" autoplay loop muted playsinline>
+      <source src="/assets/bg2.mov" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="container">
+    <div class="section-head">
+      <h2>VIP Signals</h2>
+      <p class="muted">AI-powered entries — Top Binance pairs only</p>
+    </div>
+
+    <!-- NEW: timeframe controls for signals -->
+    <div class="sig-controls" style="margin-bottom:12px; display:flex; gap:8px; align-items:center;">
+      <div style="font-weight:600; color:var(--muted); margin-right:8px;">Timeframe:</div>
+      <div id="sigTimeframes" class="seg">
+        <button class="btn tf-btn active" data-tf="1m">1m</button>
+        <button class="btn tf-btn" data-tf="5m">5m</button>
+        <button class="btn tf-btn" data-tf="15m">15m</button>
+        <button class="btn tf-btn" data-tf="1h">1h</button>
+        <button class="btn tf-btn" data-tf="4h">4h</button>
+      </div>
+
+      <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+        <label style="color:var(--muted); font-size:13px; margin-right:6px;">Show only high-confidence</label>
+        <input id="highConfToggle" type="checkbox" title="Only show signals with confidence >= threshold" />
+      </div>
+    </div>
+
+    <!-- Crypto signal cards -->
+    <div class="signals-grid" id="sigGrid" aria-live="polite" aria-atomic="true">
+      
+      <!-- BTC/USDT -->
+      <article class="card signal ai-signal" data-type="crypto" data-pair="BINANCE:BTCUSDT">
+        <div class="card-head">
+          <strong style="  background: linear-gradient(179deg, #ffad00, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;">BTC/USDT — AI Signal</strong>
+          <span class="chip ai-chip">Loading...</span>
+        </div>
+        <div class="card-body">
+          <ul class="metrics"><li class="muted">Awaiting data…</li></ul>
+          <div class="mini-box" aria-hidden="true"></div>
+        </div>
+      </article>
+
+      <!-- ETH/USDT -->
+      <article class="card signal ai-signal" data-type="crypto" data-pair="BINANCE:ETHUSDT">
+        <div class="card-head">
+          <strong style="  background: linear-gradient(179deg, #ffad00, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;">ETH/USDT — AI Signal</strong>
+          <span class="chip ai-chip">Loading...</span>
+        </div>
+        <div class="card-body">
+          <ul class="metrics"><li class="muted">Awaiting data…</li></ul>
+          <div class="mini-box" aria-hidden="true"></div>
+        </div>
+      </article>
+
+      <!-- BNB/USDT -->
+      <article class="card signal ai-signal" data-type="crypto" data-pair="BINANCE:BNBUSDT">
+        <div class="card-head">
+          <strong style="  background: linear-gradient(179deg, #ffad00, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;">BNB/USDT — AI Signal</strong>
+          <span class="chip ai-chip">Loading...</span>
+        </div>
+        <div class="card-body">
+          <ul class="metrics"><li class="muted">Awaiting data…</li></ul>
+          <div class="mini-box" aria-hidden="true"></div>
+        </div>
+      </article>
+
+      <!-- XRP/USDT -->
+      <article class="card signal ai-signal" data-type="crypto" data-pair="BINANCE:XRPUSDT">
+        <div class="card-head">
+          <strong style="  background: linear-gradient(179deg, #ffad00, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;">XRP/USDT — AI Signal</strong>
+          <span class="chip ai-chip">Loading...</span>
+        </div>
+        <div class="card-body">
+          <ul class="metrics"><li class="muted">Awaiting data…</li></ul>
+          <div class="mini-box" aria-hidden="true"></div>
+        </div>
+      </article>
+
+      <!-- DOGE/USDT -->
+      <article class="card signal ai-signal" data-type="crypto" data-pair="BINANCE:DOGEUSDT">
+        <div class="card-head">
+          <strong style="  background: linear-gradient(179deg, #ffad00, #ffffff); /* Gradient define karo */
+  -webkit-background-clip: text; /* Text pe background chipkao */
+  -webkit-text-fill-color: transparent;">DOGE/USDT — AI Signal</strong>
+          <span class="chip ai-chip">Loading...</span>
+        </div>
+        <div class="card-body">
+          <ul class="metrics"><li class="muted">Awaiting data…</li></ul>
+          <div class="mini-box" aria-hidden="true"></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+
+
+  <!-- ================= CALENDAR & NEWS ================= -->
+  <section id="calendar">
+
+    <div class="container">
+      <div class="section-head">
+        <h2 style="color:rgb(241, 197, 169);">Economic Calendar</h2>
+        <span  class="muted">Track CPI, FOMC, GDP & other high-impact events</span>
+      </div>
+      <article class="card">
+        <div class="card-body tvbox h-520">
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script async src="https://s3.tradingview.com/external-embedding/embed-widget-events.js">
+            {
+              "colorTheme": "dark",
+              "isTransparent": true,
+              "width": "100%",
+              "height": "100%",
+              "locale": "en",
+              "importanceFilter": "-1,0,1"
+            }
+            </script>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="news">
+    <div class="container">
+      <div class="section-head">
+        <h2 style="color:rgb(241, 197, 169);" >Live Market News</h2>
+        <span  class="muted">Realtime headlines across equities, crypto, FX & commodities</span>
+      </div>
+
+      <div class="card" class="grid-3">
+        <article>
+          <div class="card-head"><strong>News</strong></div>
+          <div class="card-body tvbox h-520">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js">
+              {
+                "feedMode": "all_symbols",
+                "isTransparent": true,
+                "displayMode": "regular",
+                "colorTheme": "dark",
+                "locale": "en",
+                "width": "100%",
+                "height": "100%"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);"class="card-head"><strong>Crypto News</strong></div>
+          <div class="card-body tvbox h-520">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js">
+              {
+                "feedMode": "market",
+                "market": "crypto",
+                "isTransparent": true,
+                "displayMode": "regular",
+                "colorTheme": "dark",
+                "locale": "en",
+                "width": "100%",
+                "height": "100%"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);"class="card-head"><strong>FX & Commodities</strong></div>
+          <div class="card-body tvbox h-520">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script async src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js">
+              {
+                "feedMode": "market",
+                "market": "forex",
+                "isTransparent": true,
+                "displayMode": "regular",
+                "colorTheme": "dark",
+                "locale": "en",
+                "width": "100%",
+                "height": "100%"
+              }
+              </script>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ALGORITHMS / COURSES / COMMUNITY ================= -->
+  <section id="algos">
+    <div class="container">
+      <div class="section-head">
+        <h2 >Algorithms Marketplace</h2>
+        <span class="muted">Premium TradingView indicators with clean visuals</span>
+      </div>
+
+      <div  class="grid-3-even">
+        <article class="card">
+          <div class="card-head">
+            <strong style="color:rgb(241, 197, 169);">AruAlgo v6.7 Pro Elite</strong><span class="chip">New</span>
+          </div>
+          <div class="card-body">
+            <p class="muted">ATR TS + 200 EMA + RSI/ADX + breakout confirmations. Dashboard visual + TP/SL matrix.</p>
+            <div class="mini-box" aria-hidden="true"></div>
+            <div class="card-actions">
+              <div  class="btn btn-primary">
+                <a style ="text-decoration: none; color:white;" href="/home/pricing/pricing.html">Add to TradingView</a>
+              </div>
+              <button class="btn">Docs</button>
+            </div>
+
+
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <strong style="color:rgb(241, 197, 169);">AruAlgo v6.6 Pro</strong><span class="chip">New</span>
+          </div>
+          <div class="card-body">
+            <p class="muted">Volume delta, imbalance heat, and liquidity sweeps, tuned for futures.</p>
+            <div class="mini-box" aria-hidden="true"></div>
+            <div class="card-actions">
+              <div class="btn btn-primary">
+                <a style ="text-decoration: none; color:white;" href="/home/pricing/pricing.html">Add to TradingView</a>
+              </div>
+              <button class="btn">Docs</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <strong style="color:rgb(241, 197, 169);">AruAlgo v6 Pro</strong><span class="chip">New</span>
+          </div>
+          <div class="card-body">
+            <p class="muted">Z-score bands, dynamic ATR, session filters for range days.</p>
+            <div class="mini-box" aria-hidden="true"></div>
+            <div class="card-actions">
+              <div class="btn btn-primary">
+                <a style ="text-decoration: none; color:white;" href="/home/pricing/pricing.html">Add to TradingView</a>
+              </div>
+              <button class="btn">Docs</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="courses">
+    <div class="container">
+      <div class="section-head"><h2>Courses</h2><span class="muted">From zero to pro: Price Action, Pine Script, Quant DSA</span></div>
+      <div class="grid-3-even">
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);" class="card-head"><strong>Price Action Mastery</strong><span class="chip">New</span></div>
+          <div class="card-body">
+            <ul class="muted course-list">
+              <li>Structure, BOS/CHOCH, FVGs</li>
+              <li>Risk models & journaling</li>
+              <li>Live trade reviews</li>
+            </ul>
+            <div class="card-actions">
+              <button class="btn btn-primary">Enroll</button>
+              <button class="btn">Syllabus</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);" class="card-head"><strong>Pine Script Pro</strong></div>
+          <div class="card-body">
+            <ul class="muted course-list">
+              <li>From indicators to strategies</li>
+              <li>Backtests & alerts</li>
+              <li>Premium visuals</li>
+            </ul>
+            <div class="card-actions">
+              <button class="btn btn-primary">Start Learning</button>
+              <button class="btn">Syllabus</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div style="color:rgb(241, 197, 169);"class="card-head"><strong>Quant DSA for Traders</strong></div>
+          <div class="card-body">
+            <ul class="muted course-list">
+              <li>Patterns & time complexity</li>
+              <li>Data handling for markets</li>
+              <li>Interview-grade prep</li>
+            </ul>
+            <div class="card-actions">
+              <button class="btn">Enroll</button>
+              <button class="btn btn-primary">View Syllabus</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head"><h2 >Quick Help</h2><span class="muted">Common questions to get you trading faster</span></div>
+      <article class="card">
+        <div class="card-body">
+          <details class="ax-faq">
+            <summary>How do I search a symbol?</summary>
+            <div>Use the search bar at the top. Type <code>EXCHANGE:SYMBOL</code> like <code>NSE:NIFTY</code>, <code>BINANCE:BTCUSDT</code> or plain tickers like <code>AAPL</code>.</div>
+          </details>
+          <details class="ax-faq">
+            <summary>Can I apply premium indicators?</summary>
+            <div>Yes. The advanced chart loads with premium presets. You can customize in the toolbar.</div>
+          </details>
+          <details class="ax-faq">
+            <summary>How do I save layouts?</summary>
+            <div>Layouts are saved locally for now (via <code>localStorage</code>) and cloud sync is coming soon.</div>
+          </details>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer style="border-top: 1px solid grey;" class="footer" role="contentinfo">
+    <div class="container foot-grid">
+      <div>
+        <div style=" position: relative;
+    font-size: 40px;
+    letter-spacing: .25px;display:flex; align-items:center; gap:10px; font-weight:1000;">
+          <span style=" background: linear-gradient(40deg, #ffa600, #ffffff); 
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;" >AruTradeX</span>
+        </div>
+        <p class="foot-tag">Built for Traders • © <span id="year"></span></p>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">Product</h4>
+        <ul style="list-style:none;margin:0;padding:0">
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#algos">Algorithms</a></li>
+          <li><a href="#signals">VIP Signals</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">Company</h4>
+        <ul style="list-style:none;margin:0;padding:0">
+          <li><a href="#">Docs</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Support</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">Community</h4>
+        <ul style="list-style:none;margin:0;padding:0">
+          <li><a href="#leaderboard">Leaderboard</a></li>
+          <li><a href="#community">Forums</a></li>
+          <li><a href="#courses">Courses</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Local JS -->
+  <script src="main.js" defer></script>
+
+
+</body>
+</html>

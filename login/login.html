@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AruTradeX Login</title>
+  <link rel="stylesheet" href="login.css" />
+  <!-- load firebase + page script as modules (module scripts are deferred automatically) -->
+  <script type="module" src="./firebase.js"></script>
+  <script type="module" src="./login.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <video autoplay muted loop playsinline class="bg-video">
+        <source src="/assets/clip.mp4" type="video/mp4" />
+      </video>
+      <div class="overlay">
+        <p class="caption">Precision. Profit. Power.</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="close-btn">&times;</button>
+      <div class="text"><h1><img src="/assets/logo.png">AruTradeX</h1></div>
+      <h2>Sign in</h2>
+
+      <button class="google-btn"><img src="/assets/google.png">Sign in with Google</button>
+
+      <div class="divider">or</div>
+
+      <button class="email-btn"><img src="/assets/mail.png">Email</button>
+      <p class="signup">Do not have an account? <a href="signup.html">Sign up</a></p>
+    </div>
+  </div>
+</body>
+</html>

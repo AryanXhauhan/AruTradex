@@ -1,0 +1,304 @@
+:root{
+  --bg:#07060a;
+  --card-dark:#0f1116;
+  --muted:#bfc3c9;
+  --accent1:#7b2cff;
+  --accent2:#00d4ff;
+  --accent3:#ff416c;
+  --glass: rgba(255,255,255,0.03);
+}
+
+/* Reset */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin: 0;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+   overflow-y: auto;
+}
+.background-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1; /* background me bhejne ke liye */
+}
+/* Header */
+.pv-header{padding:18px 0; background-color: rgba(0, 0, 0, 0.226); border-bottom:1px solid rgba(255,255,255,0.04)}
+.pv-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:24px;padding:0 20px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+
+.brand-name{font-weight: 700;
+    font-size: 18px;
+    /* color: #54a7ff; */
+    background: linear-gradient(45deg, #ffffff, #000eff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 40px;}
+.pv-nav a{color:rgba(255,255,255,0.75);text-decoration:none;margin:0 10px;padding:6px 10px;border-radius:8px;font-weight:500}
+.pv-nav a.active{background:rgba(255,255,255,0.06);color:#fff}
+.pv-nav a:hover{background:rgba(255, 255, 255, 0.121)}
+
+/* AUTH Buttons */
+.auth{display:flex;gap:10px;align-items:center}
+.btn{display:inline-block;padding:8px 14px;border-radius:12px;font-weight:600;border:1px solid rgba(255,255,255,0.06);text-decoration:none;cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--accent3), #ff8966); color:#fff; border:none; box-shadow:0 6px 24px rgba(255,65,108,0.12)}
+.btn.ghost{background:transparent;color:rgba(255,255,255,0.85)}
+
+/* Hero */
+.pricing-hero{padding:60px 16px 30px}
+.hero-inner{max-width:1200px;margin:0 auto;text-align:center;padding:0 20px}
+.hero-inner h1{    font-size: 60px;
+    line-height: 1.03;
+    margin: 0 0 12px;
+    font-weight: 800;
+    background: linear-gradient(64deg, #ffffff, #6400ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;}
+.hero-sub{color:var(--muted);margin-bottom:18px}
+
+.toggle-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-labels {
+  display: flex;
+  gap: 12px;
+  background: rgba(255,255,255,0.06);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.toggle-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.toggle-option input {
+  display: none;
+}
+
+.toggle-option span {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  transition: all 0.25s ease;
+}
+
+.toggle-option input:checked + span {
+  background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  color: #fff;
+}
+
+.save-pill {
+  background: rgba(255,255,255,0.04);
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Pricing container & fancy outline */
+.pricing-wrap{max-width:1200px;margin:28px auto;padding:0 20px}
+.pricing-grid{
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:18px;
+  align-items:stretch;
+  padding:28px;
+  border-radius:26px;
+  background: linear-gradient(360deg, rgb(0, 0, 0), rgb(4, 0, 23));
+  position:relative;
+  box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+  z-index: 1;
+  width: 1315px;
+  min-height: 400px;
+  margin-left: -100px;
+}
+
+/* rainbow outer stroke */
+.pricing-grid::before{
+  content:"";
+  position:absolute;inset:0;
+  border-radius:28px;
+  padding:2px;
+  background:linear-gradient(90deg,#2ee6ff,#e7ff4b,#ff5a8e);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: destination-out;
+  pointer-events:none;
+  z-index:1;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: transform .28s ease, box-shadow .28s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 235px; /* fixed width for uniformity */
+  min-height: 420px; /* taller like TradingView */
+  z-index: 1;
+}
+
+/* Create the gradient border layer */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  padding: 1px; /* thickness of the border */
+  background: linear-gradient(90deg, #ff7eb3, #ff758c, #42a5f5, #00c6ff);
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0; /* hidden until hover */
+  transition: opacity .28s ease;
+}
+
+/* Hover effect */
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 40px rgba(0, 31, 169, 0.6);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+/* Gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* highlight card style */
+.card.highlight{
+  background: linear-gradient(180deg, rgba(119,55,255,0.16), rgba(8,8,12,0.12));
+  border:1px solid rgba(255, 0, 0, 0.06);
+  transform:translateY(-6px);
+  box-shadow:0 18px 60px rgba(31, 0, 124, 0.14);
+}
+
+/* badge */
+.badge{display:inline-block;padding:6px 10px;background:rgba(0,0,0,0.35);border-radius:999px;font-weight:700;color:#fff;font-size:12px;position:absolute;right:14px;top:14px}
+
+/* Tier name */
+.tier {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 6px;
+}
+/* Price */
+.price {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  align-items: baseline;
+}
+.price .currency {
+  font-size: 14px;
+  opacity: 0.85;
+}
+.price .period {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+/* sub text and benefits */
+/* Sub text */
+.sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* spacing between features */
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-top: 40px;
+}
+
+.benefits li {
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
+  padding-bottom: 10px; /* spacing for separator */
+  border-bottom: 1px dotted rgba(255,255,255,0.3); /* dotted line */
+}
+
+.benefits li:last-child {
+  border-bottom: none; /* remove separator from last item */
+}
+
+.benefits li::before {
+  content: "✓";
+  font-weight: 700;
+  font-size: 14px;
+  color: #00d084; /* TradingView green tick */
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+
+/* Buttons */
+.btn{padding:10px 14px;border-radius:10px;border:none;text-align:center;font-weight:700;cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02030a;box-shadow:0 8px 30px rgba(125,75,255,0.14)}
+.btn.outline{background:transparent;border:2px solid rgba(255,255,255,0.06);color:#fff}
+.btn.btn.outline:hover{
+  background: rgb(6, 2, 255);
+}
+.buy-btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* responsive */
+@media (max-width:1100px){
+  .pricing-grid{grid-template-columns: repeat(2, 1fr);padding:18px}
+  .pricing-grid::before{display:block}
+}
+@media (max-width:680px){
+  .pricing-grid{grid-template-columns:1fr;gap:14px;padding:14px}
+  .hero-inner h1{font-size:28px}
+  .toggle-row{flex-direction:column;gap:8px}
+}
+
+/* Footer */
+.pv-footer{border-top:1px solid rgba(255,255,255,0.03);padding:24px 0;margin-top:18px}
+.pv-footer-inner{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;color:rgba(255,255,255,0.6)}

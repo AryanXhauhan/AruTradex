@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AruTradeX Signup</title>
+  <link rel="stylesheet" href="signup.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- load firebase + signup.js as modules -->
+  <script type="module" src="./firebase.js"></script>
+  <script type="module" src="./signup.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <video autoplay muted loop playsinline class="bg-video">
+        <source src="/assets/clip.mp4" type="video/mp4" />
+      </video>
+      <div class="overlay">
+        <p class="caption">Join the Future of Trading</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="close-btn">&times;</button>
+      <div class="text">
+        <h1><img src="/assets/logo.png">AruTradeX</h1>
+      </div>
+      <h2>Create an Account</h2>
+
+      <form id="signupForm">
+        <input type="text" id="fullName" placeholder="Full Name" required />
+        <input type="email" id="email" placeholder="Email" required />
+
+        <div class="password-wrapper">
+          <input type="password" id="password" placeholder="Password" required />
+          <i class="fa-solid fa-eye toggle-password" data-target="password"></i>
+        </div>
+
+        <div class="password-wrapper">
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+          <i class="fa-solid fa-eye toggle-password" data-target="confirmPassword"></i>
+        </div>
+
+        <button type="submit" class="signup-submit">Sign Up</button>
+      </form>
+
+      <p class="signup">Already have an account? <a href="login.html">Login</a></p>
+    </div>
+  </div>
+</body>
+</html>

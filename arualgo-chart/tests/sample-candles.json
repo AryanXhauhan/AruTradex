@@ -1,0 +1,16 @@
+{
+  "type": "indicator_update",
+  "symbol": "BTCUSDT",
+  "data": {
+    "time": 1690000000,
+    "close": 29321.12,
+    "smoothedAtrStop": 29200.4,
+    "trendEma": 29150.1,
+    "rsi": 38.2,
+    "adx": 18.4,
+    "buyCond": true,
+    "lastSL": 29000.5,
+    "lastTP": 29500.6,
+    "signalLabels": [{ "type":"primaryBuy", "text":"🟢 BUY\nSL: 29000.5\nTP: 29500.6", "time":1690000000 }]
+  }
+}
