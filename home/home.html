@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Arutradex – Smarter Trading Starts Here</title>
-  <link rel="stylesheet" href="home.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    /* Flicker fix: Hide auth area until JS runs */
-    .auth { visibility: hidden; }
-    .auth.ready { visibility: visible; }
-  </style>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/home/home.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- TradingView Library -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 
@@ -19,9 +19,11 @@
     <source src="/assets/bg-hq.mp4" type="video/mp4">
   </video>
 
+  <!-- Header -->
   <header>
     <div class="container nav">
       <div class="logo">Arutradex</div>
+      
       <nav>
         <ul>
           <li><a href="/home/market/market.html">Markets</a></li>
@@ -30,90 +32,78 @@
           <li><a href="/home/Contact/contact.html">Contact</a></li>
         </ul>
       </nav>
+      
+      <!-- Auth container (managed by firebase.js) -->
       <div class="auth">
-        <a id="login-btn" href="../login/login.html" class="login">Login</a>
-        <a id="signup-btn" href="../login/signup.html" class="signup">Sign Up</a>
-        <div id="user-info"></div>
+        <a href="../login/login.html" class="login">Login</a>
+        <a href="../login/signup.html" class="signup">Sign Up</a>
       </div>
     </div>
   </header>
 
+  <!-- Hero Section -->
   <section class="hero">
     <div class="container hero-content">
       <h1>Smarter Trading Starts Here</h1>
-      <p style="color:rgb(255, 208, 69); font-weight: 600;">Join Arutradex – your all-in-one algorithmic trading dashboard powered by precision & insights.</p>
+      <p style="color:rgb(255, 208, 69); font-weight: 600;">
+        Join Arutradex – your all-in-one algorithmic trading dashboard powered by precision & insights.
+      </p>
       <div class="buttons">
         <a href="../login/login.html" class="btn-primary">Get Started</a>
       </div>
     </div>
   </section>
 
+  <!-- Main Chart Area -->
   <section class="chart-area">
-    <div class="container chart-container">
-      <iframe src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ%3AAAPL&interval=1D&theme=dark"
-              frameborder="0" class="chart-frame" allowfullscreen>
-      </iframe>
+    <div class="container">
+      <h2 style="color: #fff; text-align: center; margin-bottom: 30px; font-size: 32px;">
+        Live Market Analysis
+      </h2>
+      
+      <!-- Hero Chart Widget (Gold) -->
+      <div class="chart-container">
+        <div id="chart-widget" style="height: 500px;"></div>
+      </div>
     </div>
   </section>
 
+  <!-- Multi-Market Section -->
+  <section class="markets-section">
+    <div class="container">
+      <h2 style="color: #fff; text-align: center; margin-bottom: 40px; font-size: 32px;">
+        Track Multiple Markets
+      </h2>
+      
+      <div class="markets-grid">
+        <!-- Crypto Widget -->
+        <div class="market-card">
+          <h3>Cryptocurrency</h3>
+          <div id="crypto-widget" style="height: 400px;"></div>
+        </div>
+        
+        
+        <!-- Forex Widget -->
+        <div class="market-card">
+          <h3>Forex</h3>
+          <div id="forex-widget" style="height: 400px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </section>
+
+  <!-- Footer -->
   <footer>
     <div class="container footer-content">
       <p>&copy; 2025 Arutradex. All rights reserved.</p>
     </div>
   </footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-
-    // Firebase config (fixed storageBucket)
-    const firebaseConfig = {
-      apiKey: "AIzaSyCt6QiP71FO4O2lf5qP0iIJI7cEczxAGAs",
-      authDomain: "arutradex-51dc0.firebaseapp.com",
-      projectId: "arutradex-51dc0",
-      storageBucket: "arutradex-51dc0.appspot.com",
-      messagingSenderId: "681384534051",
-      appId: "1:681384534051:web:e0cab72f7a0291f75fd196"
-    };
-
-    // Init Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // Elements
-    const authDiv = document.querySelector(".auth");
-    const loginBtn = document.getElementById("login-btn");
-    const signupBtn = document.getElementById("signup-btn");
-    const userInfo = document.getElementById("user-info");
-
-    // Auth state
-    onAuthStateChanged(auth, (user) => {
-      authDiv.classList.add("ready"); // show after state detected
-
-      if (user) {
-        // Hide login/signup
-        loginBtn.style.display = "none";
-        signupBtn.style.display = "none";
-
-        // Show user info
-        const avatar = user.photoURL || "/assets/default-avatar.png";
-        const name = user.displayName || user.email;
-        userInfo.innerHTML = `
-          <img src="${avatar}" alt="avatar" style="width:40px; border-radius:50%">
-          <span>${name}</span>
-          <button id="logout-btn">Sign Out</button>
-        `;
-
-        // Logout
-        document.getElementById("logout-btn").addEventListener("click", () => {
-          signOut(auth).then(() => location.reload());
-        });
-      } else {
-        loginBtn.style.display = "inline-block";
-        signupBtn.style.display = "inline-block";
-        userInfo.innerHTML = "";
-      }
-    });
-  </script>
+  <!-- Scripts (Load Order Important) -->
+  <script type="module" src="../login/firebase.js"></script>
+  <script type="module" src="../main.js"></script>
+  <script src="/home/home.js"></script>
+  
 </body>
 </html>

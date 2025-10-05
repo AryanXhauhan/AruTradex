@@ -2,6 +2,50 @@
    main.js — consolidated client script
    ========================= */
 
+/* -------------------- Fetch Override for TradingView Telemetry -------------------- */
+// Override fetch to mock TradingView telemetry requests and prevent ERR_CONNECTION_REFUSED errors
+const originalFetch = window.fetch;
+window.fetch = function(url, options) {
+  if (typeof url === 'string' && url.includes('tradingview.com') && (url.includes('telemetry') || url.includes('snowplow') || url.includes('report') || url.includes('track'))) {
+    // Return a resolved promise with a fake successful response
+    return Promise.resolve(new Response(JSON.stringify({}), { status: 200, statusText: 'OK' }));
+  }
+  return originalFetch.apply(this, arguments);
+};
+
+/* -------------------- XMLHttpRequest Override for TradingView Telemetry -------------------- */
+// Also override XMLHttpRequest since some requests might use it instead of fetch
+const originalOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function(method, url, ...args) {
+  if (typeof url === 'string' && url.includes('tradingview.com') && (url.includes('telemetry') || url.includes('snowplow') || url.includes('report') || url.includes('track'))) {
+    // Mock the request by preventing it from actually sending
+    this._isMocked = true;
+    // Call original open but we'll intercept send
+    return originalOpen.call(this, method, 'data:text/plain,', ...args);
+  }
+  return originalOpen.apply(this, [method, url, ...args]);
+};
+
+const originalSend = XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.send = function(body) {
+  if (this._isMocked) {
+    // Simulate a successful response
+    setTimeout(() => {
+      if (this.onreadystatechange) {
+        this.readyState = 4;
+        this.status = 200;
+        this.statusText = 'OK';
+        this.responseText = '{}';
+        this.response = '{}';
+        this.onreadystatechange();
+      }
+      if (this.onload) this.onload();
+    }, 0);
+    return;
+  }
+  return originalSend.apply(this, arguments);
+};
+
 /* -------------------- Utilities -------------------- */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -171,9 +215,8 @@ document.getElementById('intervalBtns')?.addEventListener('click',e=>{
 });
 window.addEventListener('load',()=>{ initAdvanced(); initChartWall(); });
 
-/* -------------------- AI Signals -------------------- */
+/* -------------------- AI Signals (Enhanced with test_backtest.js) -------------------- */
 (function aiSignalsModule(){
-  const API_BASE=window.AI_API_BASE||"http://127.0.0.1:8000";
   const SYMBOLS=[
     {pair:"BINANCE:BTCUSDT",label:"BTC/USDT"},
     {pair:"BINANCE:ETHUSDT",label:"ETH/USDT"},
@@ -182,76 +225,113 @@ window.addEventListener('load',()=>{ initAdvanced(); initChartWall(); });
     {pair:"BINANCE:DOGEUSDT",label:"DOGE/USDT"}
   ];
   const TIMEFRAMES=["1m","5m","15m","1h","4h"];
-  const REFRESH_MS=30000, CONF_CUTOFF=0.72;
-
+  
   function ensureCard(sym){
     let card=document.querySelector(`.card.signal[data-pair="${sym.pair}"]`);
     if(!card){
-      const grid=$("#sigGrid"); if(!grid) return null;
+      const grid=document.getElementById('sigGrid'); 
+      if(!grid) return null;
       card=document.createElement("article");
-      card.className="card signal ai-signal"; card.dataset.pair=sym.pair;
-      card.innerHTML=`<div class="card-head"><strong>${sym.label}</strong><span class="chip ai-chip">--</span></div>
-      <div class="card-body"><ul class="metrics"><li class="muted">Loading...</li></ul></div>`;
+      card.className="card signal ai-signal"; 
+      card.dataset.pair=sym.pair;
+      card.innerHTML=`<div class="card-head"><strong style="background: linear-gradient(179deg, #ffad00, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${sym.label} — AI Signal</strong><span class="chip ai-chip">Loading...</span></div>
+      <div class="card-body"><ul class="metrics"><li class="muted">Awaiting data…</li></ul><div class="mini-box" aria-hidden="true"></div></div>`;
       grid.appendChild(card);
     }
     return card;
   }
+  
   function buildTFRow(tf,p){
     const conf=Math.round((p.confidence||0)*100)+"%";
     const dir=(p.label||"none").toUpperCase();
     const color=dir==="LONG"?"var(--success)":dir==="SHORT"?"var(--danger)":"var(--muted)";
-    return `<li class="tf-row" data-tf="${tf}">
-      <div style="width:44px">${tf}</div>
-      <div style="width:70px;font-weight:700;color:${color}">${dir}</div>
-      <div style="width:48px">${conf}</div>
-      <div style="flex:1">E:${p.entry?Number(p.entry).toFixed(2):"-"}</div>
-      <div style="flex:1">SL:${p.sl?Number(p.sl).toFixed(2):"-"}</div>
-      <div style="flex:1">TP:${p.tp?Number(p.tp).toFixed(2):"-"}</div>
+    return `<li class="tf-row" data-tf="${tf}" style="display:flex; gap:10px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px; margin-bottom:6px;">
+      <div style="width:44px; font-weight:700;">${tf}</div>
+      <div style="width:70px; font-weight:700; color:${color};">${dir}</div>
+      <div style="width:48px; color:var(--muted);">${conf}</div>
+      <div style="flex:1; font-size:13px;">Entry: $${p.entry?Number(p.entry).toFixed(2):"-"}</div>
+      <div style="flex:1; font-size:13px;">SL: $${p.sl?Number(p.sl).toFixed(2):"-"}</div>
+      <div style="flex:1; font-size:13px;">TP: $${p.tp?Number(p.tp).toFixed(2):"-"}</div>
     </li>`;
   }
-  async function batchPredict(symbol){
-    try{
-      const r=await fetch(`${API_BASE}/batch_predict`,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({symbol,timeframes:TIMEFRAMES,limit:300})
-      });
-      if(!r.ok) return null;
-      return (await r.json()).predictions||[];
-    }catch{ return null; }
-  }
+  
   function updateCard(sym,preds,tf=null,highOnly=false){
-    const card=ensureCard(sym); if(!card) return;
-    const metrics=card.querySelector(".metrics"); metrics.innerHTML="";
-    if(!preds||!preds.length){ metrics.innerHTML="<li>No data</li>"; card.querySelector(".chip").textContent="--"; return; }
+    const card=ensureCard(sym); 
+    if(!card) return;
+    const metrics=card.querySelector(".metrics"); 
+    metrics.innerHTML="";
+    
+    if(!preds||!preds.length){ 
+      metrics.innerHTML="<li>No data available</li>"; 
+      card.querySelector(".chip").textContent="--"; 
+      return; 
+    }
+    
     TIMEFRAMES.forEach(t=>{
       if(tf&&t!==tf) return;
       const p=preds.find(x=>x.timeframe===t)||{label:"none",confidence:0};
-      if(highOnly&&(p.confidence||0)<CONF_CUTOFF) return;
+      if(highOnly&&(p.confidence||0)<0.72) return;
       metrics.insertAdjacentHTML("beforeend",buildTFRow(t,p));
     });
-    const rows=$$(".tf-row",metrics); let longs=0,shorts=0;
-    rows.forEach(r=>{const d=r.querySelector("div:nth-child(2)")?.textContent.toLowerCase();if(d==="long")longs++;if(d==="short")shorts++;});
+    
+    const rows=metrics.querySelectorAll(".tf-row"); 
+    let longs=0,shorts=0;
+    rows.forEach(r=>{
+      const d=r.querySelector("div:nth-child(2)")?.textContent.toLowerCase();
+      if(d==="long")longs++;
+      if(d==="short")shorts++;
+    });
+    
     const avg=preds.reduce((s,p)=>s+(p.confidence||0),0)/(preds.length||1);
     const chip=card.querySelector(".chip");
     chip.textContent=Math.round(avg*100)+"%";
-    chip.classList.toggle("up",longs>shorts); chip.classList.toggle("down",shorts>longs);
+    chip.classList.toggle("up",longs>shorts); 
+    chip.classList.toggle("down",shorts>longs);
   }
+  
   async function refreshAll(tf=null){
-    const highOnly=$("#highConfToggle")?.checked;
-    const results=await Promise.all(SYMBOLS.map(s=>batchPredict(s.pair)));
-    SYMBOLS.forEach((s,i)=>updateCard(s,results[i],tf,highOnly));
+    const highOnly=document.getElementById('highConfToggle')?.checked;
+    
+    // Use SignalGenerator from test_backtest.js
+    if(window.SignalGenerator){
+      try {
+        const results = await window.SignalGenerator.updateAllSignals();
+        SYMBOLS.forEach((s)=>{
+          const predictions = results[s.pair];
+          if(predictions) updateCard(s, predictions, tf, highOnly);
+        });
+      } catch(err) {
+        console.error('Signal generation error:', err);
+      }
+    }
   }
+  
   document.addEventListener("DOMContentLoaded",()=>{
-    refreshAll();
-    setInterval(()=>refreshAll(),REFRESH_MS);
-    $("#sigTimeframes")?.addEventListener("click",e=>{
-      const b=e.target.closest("button[data-tf]"); if(!b) return;
-      $$("#sigTimeframes .btn").forEach(x=>x.classList.remove("active"));
-      b.classList.add("active"); refreshAll(b.dataset.tf);
+    // Wait for SignalGenerator to load
+    setTimeout(refreshAll, 1000);
+    
+    // Listen for signal updates
+    window.addEventListener('signalsUpdated', (e) => {
+      const results = e.detail;
+      SYMBOLS.forEach((s)=>{
+        const predictions = results[s.pair];
+        if(predictions) updateCard(s, predictions, null, document.getElementById('highConfToggle')?.checked);
+      });
     });
-    $("#highConfToggle")?.addEventListener("change",()=>refreshAll());
+    
+    document.getElementById('sigTimeframes')?.addEventListener("click",e=>{
+      const b=e.target.closest("button[data-tf]"); 
+      if(!b) return;
+      document.querySelectorAll("#sigTimeframes .btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active"); 
+      refreshAll(b.dataset.tf);
+    });
+    
+    document.getElementById('highConfToggle')?.addEventListener("change",()=>refreshAll());
   });
-  window.__AX=window.__AX||{}; window.__AX.updateAiSignals=refreshAll;
+  
+  window.__AX=window.__AX||{}; 
+  window.__AX.updateAiSignals=refreshAll;
 })();
 
 /* -------------------- Polls -------------------- */
