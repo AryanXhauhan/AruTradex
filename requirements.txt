@@ -3,6 +3,5 @@ uvicorn==0.22.0
 pandas
 numpy
 joblib
-pandas-ta==0.4.67b0
 httpx==0.24.1
 python-multipart==0.0.6
