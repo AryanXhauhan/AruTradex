@@ -14,7 +14,10 @@ from datetime import datetime, timezone, timedelta
 import joblib
 import pandas as pd
 import numpy as np
-import pandas_ta as ta
+try:
+    import pandas_ta as ta
+except ImportError:
+    ta = None
 import httpx
 from urllib.parse import urlencode
 

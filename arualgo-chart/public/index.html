@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AruAlgo — Fixed tools (safe coordinate mapping)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap">
+<style>
+:root{ --bg:#000; --card:#0b0b0b; --muted:#bfc8d6; --accent:#2f8cff; --muted-2:#8f9aa8;}
+html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:#e6eef8}
+.app{display:flex;height:100vh;width:100vw;position:relative;overflow:hidden}
+.leftbar{width:94px;background:var(--card);padding:10px;box-sizing:border-box;border-right:1px solid #151515;display:flex;flex-direction:column;align-items:center;gap:8px;position:fixed;left:0;top:0;height:100vh;z-index:12000}
+.tool{width:56px;height:44px;border-radius:8px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.02);position:relative}
+.tool.active{background:var(--accent);color:#fff}
+.small{font-size:12px;color:var(--muted)}
+.palette{position:fixed; left:94px; top:64px; width:460px; max-height:78vh; overflow:auto; background:var(--card); border:1px solid #151515; box-shadow:0 30px 80px rgba(0,0,0,0.8); border-radius:12px; padding:12px; z-index:11000; display:none}
+.palette-header{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
+.search{flex:1;display:flex;gap:8px;align-items:center}
+.search input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--muted);outline:none}
+.icon-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px;border-radius:6px}
+.section{margin-bottom:10px}
+.item{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px;cursor:pointer;color:#dfe7ee}
+.item:hover{background:rgba(255,255,255,0.02)}
+.item.active{background:rgba(47,140,255,0.12)}
+.main{flex:1;margin-left:94px;position:relative;display:flex;flex-direction:column}
+header{height:52px;display:flex;align-items:center;padding:8px 12px;background:var(--bg);border-bottom:1px solid #151515;z-index:200}
+#chartWrap{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+#chart{position:absolute;left:0;top:52px;right:0;bottom:0;background:var(--bg)}
+canvas#overlay{position:absolute;left:0;top:52px;right:0;bottom:0;z-index:40;pointer-events:none}
+#handlesLayer{position:absolute;left:0;top:52px;right:0;bottom:0;pointer-events:none;z-index:100}
+.controls{position:absolute;left:12px;top:14px;z-index:60;display:flex;gap:6px}
+.btn{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;color:var(--muted);cursor:pointer}
+#measure{position:absolute;right:12px;top:14px;z-index:60;background:rgba(0,0,0,0.45);padding:6px;border-radius:6px}
+footer{height:36px;display:flex;align-items:center;padding:6px 12px;background:var(--bg);border-top:1px solid #151515;color:var(--muted)}
+#shapePanel{position:absolute;right:12px;top:60px;z-index:80;background:rgba(0,0,0,0.6);padding:8px;border-radius:8px;display:none;width:260px}
+.handleSvg{width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:auto;cursor:grab}
+.handleSvg.dragging{cursor:grabbing}
+#ctxMenu{position:fixed;display:none;z-index:10010;background:#0b0f15;border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px}
+#ctxMenu button{display:block;background:transparent;color:#e6eef8;border:0;padding:8px 12px;width:100%;text-align:left;cursor:pointer}
+.history-bar{position:absolute;left:12px;bottom:12px;z-index:70;display:flex;gap:6px}
+.history-bar .count{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;color:var(--muted)}
+.header-select{margin-left:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px;border-radius:6px}
+.live-badge{margin-left:12px;padding:4px 8px;border-radius:6px;background:rgba(47,140,255,0.12);color:var(--muted-2);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="leftbar" class="leftbar" aria-label="Tools">
+    <div id="linesMaster" class="tool" title="Lines & Channels (open palette)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div id="trendBtn" class="tool" data-tool="trendline" title="Trendline (T)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 15l6-6 4 4 8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div id="pitchBtn" class="tool" data-tool="pitchfork" title="Pitchfork (P)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l6 6M12 12l6-6M12 6v12" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <div id="positionLong" class="tool" data-tool="positionLong" title="Place Long (Shift+L)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v14" stroke="currentColor" stroke-width="1.6"/><path d="M8 7l4-4 4 4" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <div id="positionShort" class="tool" data-tool="positionShort" title="Place Short (Shift+S)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21V7" stroke="currentColor" stroke-width="1.6"/><path d="M16 17l-4 4-4-4" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <div id="trashBtn" class="tool" title="Delete all">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div style="flex:1"></div>
+    <div class="small">Hotkeys: T H L B R Z P · Shift+L/S = positions · Ctrl+Z/Y Undo/Redo</div>
+  </div>
+
+  <div id="linesPalette" class="palette" role="dialog" aria-hidden="true">
+    <div class="palette-header">
+      <div class="search" role="search">
+        <input id="searchInput" placeholder="Search tools (type to filter)"/>
+      </div>
+      <div class="palette-controls">
+        <button id="compactToggle" class="icon-btn" title="Toggle compact view">Compact</button>
+        <button id="closePalette" class="icon-btn" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+    <div id="content">
+      <div class="section">
+        <h4>Lines</h4>
+        <div tabindex="0" class="item" data-tool="trendline" title="Trendline (T)"><div class="label">Trend Line</div></div>
+        <div tabindex="0" class="item" data-tool="ray" title="Ray (R)"><div class="label">Ray</div></div>
+        <div tabindex="0" class="item" data-tool="infoLine" title="Info Line"><div class="label">Info Line</div></div>
+        <div tabindex="0" class="item" data-tool="extended" title="Extended Line (E)"><div class="label">Extended Line</div></div>
+        <div tabindex="0" class="item" data-tool="horizontal" title="Horizontal Line (H)"><div class="label">Horizontal Line</div></div>
+        <div tabindex="0" class="item" data-tool="vertical" title="Vertical Line"><div class="label">Vertical Line</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ctxMenu" role="menu">
+    <button id="ctxDelete">Delete</button>
+    <button id="ctxDuplicate">Duplicate</button>
+    <button id="ctxCopy">Copy</button>
+  </div>
+
+  <div class="main">
+    <header><strong>AruAlgo — Fixed Tools</strong>
+      <div style="margin-left:12px">
+        <select id="symbolSelect" class="header-select" aria-label="symbol">
+          <option>BTCUSDT</option><option>ETHUSDT</option><option>BNBUSDT</option>
+        </select>
+        <select id="tfSelect" class="header-select" aria-label="timeframe">
+          <option value="1m">1m</option><option value="5m">5m</option><option value="1h">1h</option><option value="1d">1d</option>
+        </select>
+        <label style="margin-left:8px;color:var(--muted);font-size:13px">Highlight moves</label>
+        <input id="highlightCheckbox" type="checkbox" style="margin-left:6px"/>
+        <input id="highlightThreshold" type="number" min="0.5" max="50" step="0.1" value="1.5" style="width:80px;margin-left:6px" title="percent threshold"/>
+        <span id="liveBadge" class="live-badge">LIVE</span>
+      </div>
+      <div style="margin-left:auto" class="small">Shapes movable · Leftbar fixed · Handles · Snapping</div></header>
+    <div id="chartWrap">
+      <div id="chart"></div>
+      <canvas id="overlay"></canvas>
+      <div id="handlesLayer" aria-hidden="true"></div>
+
+      <div class="controls">
+        <button class="btn" id="fit">Fit</button>
+        <button class="btn" id="zoomIn">Zoom In</button>
+        <button class="btn" id="zoomOut">Zoom Out</button>
+        <button class="btn" id="undoBtn">Undo</button>
+        <button class="btn" id="redoBtn">Redo</button>
+      </div>
+
+      <div id="measure">Measure: —</div>
+      <div id="shapePanel">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn" id="deleteShape">Delete</button>
+          <label style="margin:0 6px 0 6px">Color <input type="color" id="colorPicker" value="#ffd166"></label>
+          <label style="margin:0 6px">Width <input id="thickness" type="range" min="1" max="6" value="2"></label>
+        </div>
+        <label><input type="checkbox" id="labelToggle"> Show precise label (price/time)</label>
+      </div>
+
+      <div class="history-bar" title="Undo/Redo">
+        <button class="btn" id="historyUndo">Undo</button>
+        <button class="btn" id="historyRedo">Redo</button>
+        <div class="count" id="historyInfo">0</div>
+      </div>
+    </div>
+    <footer id="status">Status: ready</footer>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+/* Config */
+const HANDLE_HOVER_DELAY = 200;
+const SNAP_TIME_THRESHOLD_SEC = 60 * 60 * 24;
+
+/* Elements */
+const chartDiv = document.getElementById('chart');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const handlesLayer = document.getElementById('handlesLayer');
+const statusEl = document.getElementById('status');
+const symbolSelect = document.getElementById('symbolSelect');
+const tfSelect = document.getElementById('tfSelect');
+const highlightCheckbox = document.getElementById('highlightCheckbox');
+const highlightThreshold = document.getElementById('highlightThreshold');
+
+/* Chart */
+const chart = LightweightCharts.createChart(chartDiv, {
+  layout:{backgroundColor:'#000000', textColor:'#d8e6f6'},
+  grid:{vertLines:{color:'#111111'}, horzLines:{color:'#111111'}},
+  rightPriceScale:{borderVisible:false}, timeScale:{borderVisible:false},
+});
+const series = chart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible:false });
+
+let candles = [];
+
+/* REST load */
+function toSeconds(ms){ return Math.floor(ms/1000); }
+async function loadKlinesREST(symbol, interval, limit=500){
+  try{
+    statusEl.innerText = `Status: loading ${symbol} ${interval} ...`;
+    const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+    if(!res.ok) throw new Error('REST fetch failed');
+    const data = await res.json();
+    return data.map(k => ({ time: toSeconds(k[0]), open: +k[1], high: +k[2], low: +k[3], close: +k[4] }));
+  }catch(e){ console.warn(e); statusEl.innerText = 'REST failed'; return null; }
+}
+async function loadAndConnect(sym, tf){
+  const d = await loadKlinesREST(sym, tf, 1000);
+  if(!d) return;
+  candles = d;
+  series.setData(candles);
+  try{ chart.timeScale().fitContent(); }catch(e){}
+  statusEl.innerText = `Loaded ${sym} ${tf}`;
+}
+symbolSelect.addEventListener('change', ()=> loadAndConnect(symbolSelect.value, tfSelect.value));
+tfSelect.addEventListener('change', ()=> loadAndConnect(symbolSelect.value, tfSelect.value));
+setTimeout(()=> loadAndConnect(symbolSelect.value, tfSelect.value), 120);
+
+/* HiDPI overlay sizing */
+function cssSize(){
+  const r = chartDiv.getBoundingClientRect();
+  return { w: Math.max(1, Math.round(r.width)), h: Math.max(1, Math.round(r.height)) };
+}
+function resizeOverlay(){
+  const { w: cssW, h: cssH } = cssSize();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  overlay.style.left = '0px'; overlay.style.top = '52px';
+  overlay.style.width = cssW + 'px'; overlay.style.height = cssH + 'px';
+  overlay.width = Math.round(cssW * dpr); overlay.height = Math.round(cssH * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.font = '12px Inter, Arial';
+  ctx.textBaseline = 'top';
+  handlesLayer.style.left = '0px'; handlesLayer.style.top = '52px';
+  handlesLayer.style.width = cssW + 'px'; handlesLayer.style.height = cssH + 'px';
+  ctx.clearRect(0,0,cssW,cssH);
+  redrawAll();
+}
+window.addEventListener('resize', resizeOverlay);
+setTimeout(resizeOverlay, 200);
+
+/* Safe mapping helpers (fallbacks) */
+function timeToPxSafe(t){
+  try {
+    const v = chart.timeScale().timeToCoordinate(t);
+    if(v!=null) return v;
+  } catch(e){}
+  // fallback: linear interpolate using visible range
+  try{
+    const vr = chart.timeScale().getVisibleRange();
+    if(!vr || !vr.from || !vr.to) return null;
+    const r = cssSize(); const from = Number(vr.from), to = Number(vr.to);
+    const frac = (t - from) / ((to - from) || 1);
+    return frac * r.w;
+  }catch(e){ return null; }
+}
+function pxToTimeSafe(x){
+  try{
+    const t = chart.timeScale().coordinateToTime(x);
+    if(t!=null) return Number(t);
+  }catch(e){}
+  try{
+    const vr = chart.timeScale().getVisibleRange();
+    if(!vr || !vr.from || !vr.to) return null;
+    const r = cssSize(); const from = Number(vr.from), to = Number(vr.to);
+    const frac = (x / (r.w || 1));
+    return Math.round(from + frac * (to - from));
+  }catch(e){ return null; }
+}
+function priceToPxSafe(p){
+  try{
+    const v = series.priceToCoordinate(p);
+    if(v!=null) return v;
+  }catch(e){}
+  try{
+    const r = cssSize();
+    const topPrice = series.coordinateToPrice(0);
+    const bottomPrice = series.coordinateToPrice(r.h);
+    if(topPrice==null || bottomPrice==null) return null;
+    const frac = (p - topPrice) / ((bottomPrice - topPrice) || 1);
+    return frac * r.h;
+  }catch(e){ return null; }
+}
+function pxToPriceSafe(y){
+  try{
+    const v = series.coordinateToPrice(y);
+    if(v!=null) return Number(v);
+  }catch(e){}
+  try{
+    const r = cssSize();
+    const topPrice = series.coordinateToPrice(0);
+    const bottomPrice = series.coordinateToPrice(r.h);
+    if(topPrice==null || bottomPrice==null) return null;
+    const frac = (y / (r.h || 1));
+    return topPrice + frac * (bottomPrice - topPrice);
+  }catch(e){ return null; }
+}
+
+/* Wrapper aliases used through code */
+function timeToPx(t){ return timeToPxSafe(t); }
+function pxToTime(x){ return pxToTimeSafe(x); }
+function priceToPx(p){ return priceToPxSafe(p); }
+function pxToPrice(y){ return pxToPriceSafe(y); }
+
+/* Model */
+let shapes = [];
+let transient = null;
+let currentTool = 'pointer';
+let keepDrawing = false;
+let selectedShapeIndex = null;
+let hoveredShapeIndex = null;
+let hoverTimer = null;
+let draggingHandleInfo = null;
+let movingShape = null;
+let clipboardShape = null;
+
+/* History */
+const undoStack = [], redoStack = [];
+function pushHistory(p){ undoStack.push(JSON.parse(JSON.stringify(p))); if(undoStack.length>200) undoStack.shift(); redoStack.length=0; updateHistoryUI(); }
+function updateHistoryUI(){ document.getElementById('historyInfo').innerText = `undo:${undoStack.length} redo:${redoStack.length}`; }
+function snapshotAndPush(){ pushHistory(shapes); }
+function undo(){ if(undoStack.length===0) return; const last = undoStack.pop(); redoStack.push(last); shapes = JSON.parse(JSON.stringify(last)); selectedShapeIndex=null; redrawAll(); updateHistoryUI(); }
+function redo(){ if(redoStack.length===0) return; const e = redoStack.pop(); undoStack.push(e); shapes = JSON.parse(JSON.stringify(e)); selectedShapeIndex=null; redrawAll(); updateHistoryUI(); }
+
+/* Handles DOM */
+function clearHandles(){ handlesLayer.innerHTML = ''; }
+function createHandleEl(x, y, shapeIndex, pointIndex){
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'absolute';
+  wrapper.style.left = x + 'px';
+  wrapper.style.top = y + 'px';
+  wrapper.style.transform = 'translate(-50%,-50%)';
+  wrapper.style.width = '18px';
+  wrapper.style.height = '18px';
+  wrapper.style.pointerEvents = 'auto';
+  wrapper.className = 'handleSvg';
+  wrapper.dataset.shapeIndex = shapeIndex;
+  wrapper.dataset.pointIndex = pointIndex;
+  wrapper.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="#0b0b0b" stroke="#fff" stroke-width="2" opacity="0.95"/><circle cx="12" cy="12" r="3.2" fill="#2f8cff"/></svg>`;
+  wrapper.addEventListener('pointerdown',(ev)=>{
+    ev.stopPropagation(); ev.preventDefault();
+    const si = parseInt(wrapper.dataset.shapeIndex,10), pi = parseInt(wrapper.dataset.pointIndex,10);
+    draggingHandleInfo = { shapeIndex: si, pointIndex: pi, handleEl: wrapper };
+    try{ wrapper.setPointerCapture(ev.pointerId); }catch(e){}
+    wrapper.classList.add('dragging');
+    selectedShapeIndex = si; showShapePanel(si); updateOverlayPointer();
+  });
+  wrapper.addEventListener('mouseenter', ()=> wrapper.style.transform='translate(-50%,-50%) scale(1.08)');
+  wrapper.addEventListener('mouseleave', ()=> wrapper.style.transform='translate(-50%,-50%) scale(1)');
+  handlesLayer.appendChild(wrapper);
+  return wrapper;
+}
+function updateHandlesForShape(idx){
+  clearHandles();
+  if(idx==null) return;
+  const s = shapes[idx]; if(!s) return;
+  for(let pi=0; pi<s.points.length; pi++){
+    const p = s.points[pi];
+    const px = timeToPx(p.time), py = priceToPx(p.price);
+    if(px==null || py==null) continue;
+    createHandleEl(px, py, idx, pi);
+  }
+}
+
+/* Draw shapes */
+function drawShape(s, isTransient=false){
+  ctx.lineWidth = s.options?.width || 2;
+  ctx.strokeStyle = isTransient ? '#00e676' : (s.options?.color || '#ffd166');
+  ctx.fillStyle = s.options?.color || '#ffd166';
+  try{
+    if(s.type==='trendline' || s.type==='line' || s.type==='extended'){
+      if(s.points.length<2) return;
+      const a=s.points[0], b=s.points[1];
+      const x1=timeToPx(a.time), y1=priceToPx(a.price), x2=timeToPx(b.time), y2=priceToPx(b.price);
+      if([x1,y1,x2,y2].some(v=>v==null)) return;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    } else if(s.type==='horizontal'){
+      const p=s.points[0]; const y = priceToPx(p.price); if(y==null) return; const { w } = cssSize(); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    } else if(s.type==='vertical'){
+      const p=s.points[0]; const x=timeToPx(p.time); if(x==null) return; const { h } = cssSize(); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    } else if(s.type==='infoLine'){
+      if(s.points.length<2) return;
+      const a=s.points[0], b=s.points[1];
+      const x1=timeToPx(a.time), y1=priceToPx(a.price), x2=timeToPx(b.time), y2=priceToPx(b.price);
+      if([x1,y1,x2,y2].some(v=>v==null)) return;
+      ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.setLineDash([]);
+    } else if(s.type==='position'){
+      const ex = s.extra; if(!ex) return;
+      const entryY = priceToPx(ex.entry), stopY = priceToPx(ex.stop);
+      const { w: cssW } = cssSize(); if(entryY==null||stopY==null) return;
+      const left = 0.05*cssW, right = 0.95*cssW; const top = Math.min(entryY,stopY), bottom = Math.max(entryY,stopY);
+      ctx.fillStyle = ex.side==='long' ? 'rgba(0,200,120,0.12)' : 'rgba(255,60,60,0.12)';
+      ctx.fillRect(left, top, right-left, bottom-top);
+    }
+    if(s.showLabel){
+      const p=s.points[0]; const x=timeToPx(p.time), y=priceToPx(p.price);
+      if(x!=null && y!=null){ ctx.fillStyle='#cfe8ff'; ctx.fillText(`${p.price.toFixed(2)}`, x+8, y-18); }
+    }
+  }catch(e){ console.warn('draw error', e); }
+}
+
+/* Highlights */
+function drawHighlights(){
+  if(!highlightCheckbox.checked || !candles || candles.length===0) return;
+  const thresh = parseFloat(highlightThreshold.value) || 1.5;
+  const { w } = cssSize();
+  try{
+    const vr = chart.timeScale().getVisibleRange();
+    const from = Math.floor(vr.from||candles[0].time), to = Math.floor(vr.to||candles[candles.length-1].time);
+    for(let i=0;i<candles.length;i++){
+      const c = candles[i]; if(c.time<from||c.time>to) continue;
+      const body = Math.abs(c.close-c.open); const pct = Math.abs(body/(c.open||1)*100);
+      if(pct>=thresh){
+        const x = timeToPx(c.time); if(x==null) continue;
+        const top = priceToPx(c.high), bottom = priceToPx(c.low); if(top==null||bottom==null) continue;
+        ctx.fillStyle = (c.close>=c.open) ? 'rgba(0,200,120,0.08)' : 'rgba(255,60,60,0.08)';
+        ctx.fillRect(x-3, top, 6, Math.max(2, bottom-top));
+        ctx.fillStyle='#cfe8ff'; ctx.fillText(`${pct.toFixed(2)}%`, x+6, top-18);
+      }
+    }
+  }catch(e){}
+}
+
+/* Redraw */
+function redrawAll(){
+  const { w: cssW, h: cssH } = cssSize();
+  ctx.clearRect(0,0,cssW,cssH);
+  drawHighlights();
+  for(let i=0;i<shapes.length;i++){ if(shapes[i].visible===false) continue; drawShape(shapes[i]); }
+  if(transient) drawShape(transient, true);
+  const showIdx = selectedShapeIndex!=null ? selectedShapeIndex : hoveredShapeIndex;
+  updateHandlesForShape(showIdx);
+}
+
+/* Hit testing */
+function findHandleAt(cssX,cssY){
+  for(let i=shapes.length-1;i>=0;i--){
+    const s=shapes[i];
+    for(let pi=0; pi<s.points.length; pi++){
+      const p=s.points[pi]; const px=timeToPx(p.time), py=priceToPx(p.price); if(px==null||py==null) continue;
+      if(Math.hypot(px-cssX,py-cssY) <= 9) return { shapeIndex:i, pointIndex:pi };
+    }
+  }
+  return null;
+}
+function findShapeUnder(cssX,cssY){
+  for(let i=shapes.length-1;i>=0;i--){
+    const s=shapes[i];
+    const pts = s.points.map(p=>[timeToPx(p.time), priceToPx(p.price)]).filter(p=>p[0]!=null && p[1]!=null);
+    if(pts.length===0) continue;
+    const minX=Math.min(...pts.map(p=>p[0])), maxX=Math.max(...pts.map(p=>p[0])),
+          minY=Math.min(...pts.map(p=>p[1])), maxY=Math.max(...pts.map(p=>p[1]));
+    if(cssX>=minX-6 && cssX<=maxX+6 && cssY>=minY-6 && cssY<=maxY+6) return i;
+  }
+  return null;
+}
+function eventToTP(ev){
+  const rect = overlay.getBoundingClientRect();
+  const cssX = ev.clientX - rect.left;
+  const cssY = ev.clientY - rect.top;
+  return { x: cssX, y: cssY, time: pxToTime(cssX), price: pxToPrice(cssY) };
+}
+
+/* Snapping */
+function findNearestCandleByTime(targetTime){
+  if(!candles || candles.length===0) return null;
+  let lo=0, hi=candles.length-1;
+  while(lo<=hi){ const mid = Math.floor((lo+hi)/2); if(candles[mid].time===targetTime) return candles[mid]; if(candles[mid].time < targetTime) lo=mid+1; else hi=mid-1; }
+  const cand1 = candles[Math.max(0, Math.min(candles.length-1, lo))];
+  const cand2 = candles[Math.max(0, Math.min(candles.length-1, lo-1))];
+  if(!cand2) return cand1;
+  const d1 = Math.abs(cand1.time-targetTime), d2 = Math.abs(cand2.time-targetTime);
+  return d1 <= d2 ? cand1 : cand2;
+}
+function snapPointToCandles(cssX, cssY){
+  const time = pxToTime(cssX);
+  if(time == null) return null;
+  const nearest = findNearestCandleByTime(time);
+  if(!nearest) return null;
+  if(Math.abs(nearest.time - time) > SNAP_TIME_THRESHOLD_SEC) return null;
+  const pointerPrice = pxToPrice(cssY);
+  const candidates = [nearest.open, nearest.high, nearest.low, nearest.close];
+  let best = candidates[0], bestDiff = Math.abs(candidates[0] - pointerPrice);
+  for(let i=1;i<candidates.length;i++){ const d = Math.abs(candidates[i] - pointerPrice); if(d < bestDiff){ best = candidates[i]; bestDiff = d; } }
+  return { time: nearest.time, price: best };
+}
+
+/* Overlay pointer toggling */
+function updateOverlayPointer(){
+  const shouldCapture = (currentTool !== 'pointer') || movingShape || draggingHandleInfo || !!transient || keepDrawing;
+  overlay.style.pointerEvents = shouldCapture ? 'auto' : 'none';
+  handlesLayer.style.pointerEvents = shouldCapture ? 'auto' : 'none';
+}
+
+/* Pointer handlers (refactored) */
+function handlePointerDown(ev){
+  if(ev.button && ev.button !== 0) return;
+  const rect = overlay.getBoundingClientRect();
+  const cssX = ev.clientX - rect.left, cssY = ev.clientY - rect.top;
+  const info = eventToTP(ev);
+  const elAt = document.elementFromPoint(ev.clientX, ev.clientY);
+  if(elAt && elAt.closest && elAt.closest('.handleSvg')) return;
+  const hit = findHandleAt(cssX, cssY);
+  if(hit){ selectedShapeIndex = hit.shapeIndex; showShapePanel(selectedShapeIndex); redrawAll(); return; }
+  const under = findShapeUnder(cssX, cssY);
+  if(under !== null){
+    if(currentTool === 'pointer' || currentTool === 'pointermove'){
+      selectedShapeIndex = under; showShapePanel(selectedShapeIndex);
+      const startTP = eventToTP(ev);
+      const origPoints = JSON.parse(JSON.stringify(shapes[under].points));
+      movingShape = { shapeIndex: under, startTP, origPoints };
+      try{ ev.target.setPointerCapture && ev.target.setPointerCapture(ev.pointerId); }catch(e){}
+      updateOverlayPointer(); redrawAll(); return;
+    } else {
+      selectedShapeIndex = under; showShapePanel(selectedShapeIndex); redrawAll(); return;
+    }
+  }
+  if(currentTool === 'pointer') return;
+  if(currentTool === 'text'){ const txt = prompt('Enter text'); if(txt){ const s=createShape('text',[{time:info.time,price:info.price}]); s.text = txt; snapshotAndPush(); shapes.push(s); redrawAll(); if(!keepDrawing) setTool('pointer'); } return; }
+  if(currentTool === 'positionLong' || currentTool === 'positionShort'){
+    const side = currentTool === 'positionLong' ? 'long' : 'short';
+    const entry = info.price;
+    const stop = side==='long' ? entry - Math.max(1, entry*0.002) : entry + Math.max(1, entry*0.002);
+    const target = side==='long' ? entry + Math.max(1, entry*0.01) : entry - Math.max(1, entry*0.01);
+    const shape = createShape('position',[{time:info.time,price:entry}], { color: side==='long' ? 'rgba(0,230,120,0.6)' : 'rgba(255,70,70,0.6)', width:1 });
+    shape.extra = { side, entry, stop, target };
+    snapshotAndPush(); shapes.push(shape); redrawAll(); if(!keepDrawing) setTool('pointer'); return;
+  }
+  if(['trendline','ray','extended','infoLine','line','horizontal','vertical','rect','poly','brush'].includes(currentTool)){
+    transient = createShape(currentTool, [{time:info.time, price:info.price}], { color: document.getElementById('colorPicker')?.value || '#ffd166', width: parseInt(document.getElementById('thickness')?.value || 2) });
+    if(['trendline','ray','extended','infoLine','line'].includes(currentTool)) transient.points.push({time:info.time,price:info.price});
+  }
+  updateOverlayPointer(); redrawAll();
+}
+function handlePointerMove(ev){
+  const rect = overlay.getBoundingClientRect();
+  const cssX = ev.clientX - rect.left, cssY = ev.clientY - rect.top;
+  const info = eventToTP(ev);
+  if(hoverTimer) clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(()=>{
+    const h = findShapeUnder(cssX, cssY);
+    if(h !== hoveredShapeIndex){ hoveredShapeIndex = h; redrawAll(); }
+  }, HANDLE_HOVER_DELAY);
+  if(transient){
+    if(transient.points.length===1) transient.points[1] = { time: info.time, price: info.price };
+    else transient.points[transient.points.length-1] = { time: info.time, price: info.price };
+    if(['poly','brush'].includes(transient.type)) transient.points.push({ time: info.time, price: info.price });
+    if(transient.points.length>=2){ const a=transient.points[0], b=transient.points[transient.points.length-1]; document.getElementById('measure').innerText = `Δ ${Math.abs(b.price-a.price).toFixed(2)} • ${Math.round(Math.abs(b.time-a.time))}s`; }
+    redrawAll();
+  }
+}
+
+/* Attach to overlay and chartDiv */
+overlay.addEventListener('pointerdown', handlePointerDown);
+overlay.addEventListener('pointermove', handlePointerMove);
+chartDiv.addEventListener('pointerdown', (ev)=>{ if(overlay.style.pointerEvents === 'none' || currentTool !== 'pointer') handlePointerDown(ev); });
+chartDiv.addEventListener('pointermove', (ev)=>{ if(overlay.style.pointerEvents === 'none' || transient) handlePointerMove(ev); });
+
+/* document-level move/up for dragging & finishing */
+document.addEventListener('pointermove', (ev)=>{
+  if(draggingHandleInfo){
+    const rectHandles = handlesLayer.getBoundingClientRect();
+    const localX = ev.clientX - rectHandles.left;
+    const localY = ev.clientY - rectHandles.top;
+    const snapped = snapPointToCandles(localX, localY);
+    let newTime = pxToTime(localX), newPrice = pxToPrice(localY);
+    if(snapped){ newTime = snapped.time; newPrice = snapped.price; }
+    const s = shapes[draggingHandleInfo.shapeIndex];
+    if(!s || s.locked) return;
+    s.points[draggingHandleInfo.pointIndex].time = newTime;
+    s.points[draggingHandleInfo.pointIndex].price = newPrice;
+    const px = timeToPx(newTime), py = priceToPx(newPrice);
+    if(px!=null && py!=null){
+      draggingHandleInfo.handleEl.style.left = px + 'px'; draggingHandleInfo.handleEl.style.top = py + 'px';
+    }
+    redrawAll();
+    return;
+  }
+  if(movingShape){
+    const rect = overlay.getBoundingClientRect();
+    const curTP = { time: pxToTime(ev.clientX - rect.left), price: pxToPrice(ev.clientY - rect.top) };
+    if(!curTP.time || !curTP.price) return;
+    const dt = curTP.time - movingShape.startTP.time;
+    const dp = curTP.price - movingShape.startTP.price;
+    const s = shapes[movingShape.shapeIndex];
+    if(!s || s.locked) return;
+    for(let i=0;i<s.points.length;i++){
+      s.points[i].time = movingShape.origPoints[i].time + dt;
+      s.points[i].price = movingShape.origPoints[i].price + dp;
+    }
+    redrawAll();
+    return;
+  }
+});
+document.addEventListener('pointerup', (ev)=>{
+  if(draggingHandleInfo){
+    const el = draggingHandleInfo.handleEl; el.classList.remove('dragging');
+    try{ el.releasePointerCapture(ev.pointerId); }catch(e){}
+    const rectHandles = handlesLayer.getBoundingClientRect();
+    const localX = ev.clientX - rectHandles.left, localY = ev.clientY - rectHandles.top;
+    const snapped = snapPointToCandles(localX, localY);
+    const finalTime = snapped ? snapped.time : pxToTime(localX);
+    const finalPrice = snapped ? snapped.price : pxToPrice(localY);
+    const s = shapes[draggingHandleInfo.shapeIndex];
+    if(s){ s.points[draggingHandleInfo.pointIndex].time = finalTime; s.points[draggingHandleInfo.pointIndex].price = finalPrice; }
+    draggingHandleInfo = null; updateOverlayPointer(); snapshotAndPush(); redrawAll(); return;
+  }
+  if(movingShape){
+    snapshotAndPush(); movingShape = null; updateOverlayPointer(); redrawAll(); return;
+  }
+  if(transient){
+    if(transient.points.length===1) transient.points.push(Object.assign({}, transient.points[0]));
+    shapes.push(transient); snapshotAndPush(); transient = null; updateOverlayPointer(); redrawAll();
+    if(!keepDrawing) setTool('pointer');
+  }
+});
+
+/* helpers */
+function createShape(type, pts, opts={}){ return { id:'s_'+Date.now()+Math.random().toString(36).slice(2,6), type, points: JSON.parse(JSON.stringify(pts)), options: Object.assign({ color:'#ffd166', width:2 }, opts), locked:false, visible:true, showLabel:false, pfStyle:'andrews', extra:{} }; }
+
+/* ctx menu */
+const ctxMenu = document.getElementById('ctxMenu');
+overlay.addEventListener('contextmenu', (ev)=>{
+  ev.preventDefault();
+  const rect = overlay.getBoundingClientRect(); const cssX = ev.clientX - rect.left, cssY = ev.clientY - rect.top;
+  const idx = findShapeUnder(cssX, cssY); if(idx===null){ ctxMenu.style.display='none'; return; }
+  ctxMenu.style.left = ev.clientX + 'px'; ctxMenu.style.top = ev.clientY + 'px'; ctxMenu.style.display='block';
+  ctxMenu._targetIndex = idx;
+});
+document.addEventListener('click', ()=> ctxMenu.style.display='none');
+document.getElementById('ctxDelete').addEventListener('click', ()=>{ const idx = ctxMenu._targetIndex; if(idx==null) return; snapshotAndPush(); shapes.splice(idx,1); redrawAll(); ctxMenu.style.display='none';});
+document.getElementById('ctxDuplicate').addEventListener('click', ()=>{ const idx = ctxMenu._targetIndex; if(idx==null) return; snapshotAndPush(); const s = JSON.parse(JSON.stringify(shapes[idx])); s.id='s_'+Date.now().toString(36); shapes.push(s); redrawAll(); ctxMenu.style.display='none';});
+document.getElementById('ctxCopy').addEventListener('click', ()=>{ const idx = ctxMenu._targetIndex; if(idx==null) return; clipboardShape = JSON.parse(JSON.stringify(shapes[idx])); ctxMenu.style.display='none';});
+
+/* shape panel (small) */
+const shapePanel = document.getElementById('shapePanel');
+const colorPicker = document.getElementById('colorPicker');
+const thickness = document.getElementById('thickness');
+const labelToggle = document.getElementById('labelToggle');
+
+function showShapePanel(idx){
+  if(idx==null){ shapePanel.style.display='none'; selectedShapeIndex=null; clearHandles(); return; }
+  const s = shapes[idx]; if(!s) { shapePanel.style.display='none'; return; }
+  selectedShapeIndex = idx; shapePanel.style.display='block';
+  try{ colorPicker.value = s.options.color || '#ffd166'; thickness.value = s.options.width || 2; labelToggle.checked = !!s.showLabel; }catch(e){}
+  updateHandlesForShape(idx);
+}
+document.getElementById('deleteShape').addEventListener('click', ()=>{ if(selectedShapeIndex==null) return; snapshotAndPush(); shapes.splice(selectedShapeIndex,1); selectedShapeIndex=null; showShapePanel(null); redrawAll(); });
+if(colorPicker) colorPicker.addEventListener('input', ()=>{ if(selectedShapeIndex==null) return; shapes[selectedShapeIndex].options.color = colorPicker.value; redrawAll(); snapshotAndPush();});
+if(thickness) thickness.addEventListener('input', ()=>{ if(selectedShapeIndex==null) return; shapes[selectedShapeIndex].options.width = parseInt(thickness.value); redrawAll(); snapshotAndPush();});
+if(labelToggle) labelToggle.addEventListener('change', ()=>{ if(selectedShapeIndex==null) return; shapes[selectedShapeIndex].showLabel = labelToggle.checked; redrawAll(); snapshotAndPush();});
+
+/* palette and tool selection */
+const master = document.getElementById('linesMaster'), palette = document.getElementById('linesPalette');
+master.addEventListener('click', ()=>{ palette.style.display = palette.style.display === 'block' ? 'none' : 'block'; });
+document.querySelectorAll('.item').forEach(it=> it.addEventListener('click', ()=>{ const tool = it.dataset.tool; selectTool(tool); palette.style.display='none'; }));
+function setTool(tool){ currentTool = tool; document.querySelectorAll('.leftbar .tool').forEach(t=> t.classList.toggle('active', t.dataset.tool === tool)); document.querySelectorAll('.item').forEach(it=> it.classList.toggle('active', it.dataset.tool === tool)); updateOverlayPointer(); }
+function selectTool(toolKey){ if(toolKey === 'schiff') currentTool='schiff'; else if(toolKey==='modSchiff') currentTool='modified'; else currentTool = toolKey; setTool(currentTool); }
+document.getElementById('trendBtn').addEventListener('click', ()=> setTool('trendline'));
+document.getElementById('pitchBtn').addEventListener('click', ()=> setTool('pitchfork'));
+document.getElementById('positionLong').addEventListener('click', ()=> setTool('positionLong'));
+document.getElementById('positionShort').addEventListener('click', ()=> setTool('positionShort'));
+document.getElementById('trashBtn').addEventListener('click', ()=>{ if(confirm('Clear drawings?')){ snapshotAndPush(); shapes=[]; redrawAll(); } });
+
+/* keyboard */
+document.addEventListener('keydown', (e)=>{
+  if(e.target && (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA')) return;
+  if(e.ctrlKey && e.key.toLowerCase()==='z'){ undo(); return; }
+  if(e.ctrlKey && (e.key.toLowerCase()==='y' || (e.shiftKey && e.key.toLowerCase()==='z'))){ redo(); return; }
+  const key = e.key.toLowerCase();
+  if(key==='t') setTool('trendline');
+  else if(key==='h') setTool('horizontal');
+  else if(key==='l') setTool('pointer');
+  else if(key==='b') setTool('brush');
+  else if(key==='r') setTool('ray');
+  else if(key==='z') chart.timeScale().fitContent();
+  else if(key==='p') setTool('pitchfork');
+  else if(e.shiftKey && key==='l') setTool('positionLong');
+  else if(e.shiftKey && key==='s') setTool('positionShort');
+});
+
+/* controls */
+document.getElementById('fit').addEventListener('click', ()=> chart.timeScale().fitContent());
+document.getElementById('zoomIn').addEventListener('click', ()=> chart.timeScale().zoom(1.2));
+document.getElementById('zoomOut').addEventListener('click', ()=> chart.timeScale().zoom(0.8));
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('redoBtn').addEventListener('click', redo);
+
+/* init */
+setTimeout(()=>{ resizeOverlay(); updateOverlayPointer(); }, 300);
+
+/* debug */
+window._shapes = shapes; window.snapshotAndPush = snapshotAndPush; window.undo = undo; window.redo = redo;
+</script>
+</body>
+</html>
